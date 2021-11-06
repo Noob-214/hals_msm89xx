@@ -67,7 +67,7 @@ static const snd_device_t wsa_combo_devices[] = {
     SND_DEVICE_OUT_SPEAKER_AND_ANC_HEADSET
 };
 
-static void update_hardware_info_8x16(struct hardware_info *hw_info, const char *snd_card_name)
+static init update_hardware_info_8x16(struct hardware_info *hw_info, const char *snd_card_name)
 {
     if (!strcmp(snd_card_name, "msm8x16-snd-card")) {
         strlcpy(hw_info->name, "msm8x16", sizeof(hw_info->name));
@@ -190,7 +190,9 @@ static void update_hardware_info_8x16(struct hardware_info *hw_info, const char 
         strlcpy(hw_info->name, "msm8909", sizeof(hw_info->name));
     } else {
         ALOGW("%s: Not an 8x16/8909/8917/8920/8937/8939/8940/8952/8953/660 device", __func__);
+        return -ENODEV;
     }
+    return 0;
 }
 
 void *hw_info_init(const char *snd_card_name)
@@ -211,17 +213,7 @@ void *hw_info_init(const char *snd_card_name)
     hw_info->is_wsa_combo_suppported = false;
 
     hw_info->is_stereo_spkr = true;
-    if (strstr(snd_card_name, "msm8x16") || strstr(snd_card_name, "msm8939") ||
-        strstr(snd_card_name, "msm8909") || strstr(snd_card_name, "msm8952") ||
-        strstr(snd_card_name, "msm8976") || strstr(snd_card_name, "msm8953") ||
-        strstr(snd_card_name, "msm8937") || strstr(snd_card_name, "msm8917") ||
-        strstr(snd_card_name, "msm8940") || strstr(snd_card_name, "msm8920") ||
-        strstr(snd_card_name, "sdm660") || strstr(snd_card_name, "apq8009") ||
-        strstr(snd_card_name, "mdm9607") || strstr(snd_card_name, "mdm-tasha") ||
-        strstr(snd_card_name, "sdm439")) {
-        ALOGV("8x16 - variant soundcard");
-        update_hardware_info_8x16(hw_info, snd_card_name);
-    } else {
+   if (update_hardware_info_8x16(hw_info, snd_card_name) < 0) {
         ALOGE("%s: Unsupported target %s:",__func__, snd_card_name);
         free(hw_info);
         hw_info = NULL;
